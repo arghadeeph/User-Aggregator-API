@@ -71,4 +71,5 @@ GET /api/users?gender=female&country=India&limit=5&fields=name,email,country
 - If `fields` is passed, only requested fields are returned for each user.
 
 ## Detailed Documentation
-See `DOCUMENTATION.md` for a full breakdown of architecture, schema, flow, and implementation notes.
+See `Documentation/DOCUMENTATION.md` for a full breakdown of architecture, schema, flow, and implementation notes.
+For architecture and design decisions, see `Documentation/DETAILED_EXPLANATION.md`.
