@@ -5,76 +5,59 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
 
 class UserController extends Controller
 {
-    public function index(Request $request): JsonResponse
+    public function index(Request $request)
     {
-        $validated = $request->validate([
-            'gender' => ['nullable', 'string'],
-            'city' => ['nullable', 'string'],
-            'country' => ['nullable', 'string'],
-            'limit' => ['nullable', 'integer', 'min:1', 'max:100'],
-            'fields' => ['nullable', 'string'],
-        ]);
-
         $query = User::query()->with(['detail', 'location']);
 
-        if (isset($validated['gender'])) {
-            $query->whereHas('detail', function ($detailQuery) use ($validated): void {
-                $detailQuery->where('gender', $validated['gender']);
+        // Filter by gender
+        if ($request->filled('gender')) {
+            $query->whereHas('detail', function ($q) use ($request) {
+                $q->where('gender', $request->gender);
             });
         }
 
-        if (isset($validated['city'])) {
-            $query->whereHas('location', function ($locationQuery) use ($validated): void {
-                $locationQuery->where('city', $validated['city']);
+        // Filter by city
+        if ($request->filled('city')) {
+            $query->whereHas('location', function ($q) use ($request) {
+                $q->where('city', $request->city);
             });
         }
 
-        if (isset($validated['country'])) {
-            $query->whereHas('location', function ($locationQuery) use ($validated): void {
-                $locationQuery->where('country', $validated['country']);
+        // Filter by country
+        if ($request->filled('country')) {
+            $query->whereHas('location', function ($q) use ($request) {
+                $q->where('country', $request->country);
             });
         }
 
-        $limit = $validated['limit'] ?? 10;
+        // Limit number of records
+        $limit = $request->get('limit', 10);
+
         $users = $query->limit($limit)->get();
 
-        $allowedFields = ['name', 'email', 'gender', 'city', 'country'];
-        $selectedFields = $allowedFields;
+        $fields = $request->get('fields');
 
-        // Optional enhancement: client can choose which fields are returned.
-        if (isset($validated['fields'])) {
-            $requestedFields = collect(explode(',', $validated['fields']))
-                ->map(fn (string $field): string => trim($field))
-                ->filter()
-                ->values()
-                ->all();
+        if ($fields) {
 
-            $selectedFields = array_values(array_intersect($allowedFields, $requestedFields));
+            $fields = explode(',', $fields);
 
-            if ($selectedFields === []) {
-                $selectedFields = $allowedFields;
-            }
+            $users = $users->map(function ($user) use ($fields) {
+
+                $data = [
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'gender' => $user->detail->gender ?? null,
+                    'city' => $user->location->city ?? null,
+                    'country' => $user->location->country ?? null,
+                ];
+
+                return collect($data)->only($fields);
+            });
         }
 
-        $data = $users->map(function (User $user) use ($selectedFields): array {
-            $userData = [
-                'name' => $user->name,
-                'email' => $user->email,
-                'gender' => optional($user->detail)->gender,
-                'city' => optional($user->location)->city,
-                'country' => optional($user->location)->country,
-            ];
-
-            return collect($userData)->only($selectedFields)->all();
-        });
-
-        return response()->json([
-            'count' => $data->count(),
-            'data' => $data,
-        ]);
+        return response()->json($users);
     }
 }

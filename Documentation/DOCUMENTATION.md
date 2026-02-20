@@ -7,12 +7,16 @@ This Laravel project fetches random users on a schedule, saves them into normali
 
 ### 2.1 Scheduled Task
 - A scheduled task is configured in `routes/console.php`.
-- Command: `app:fetch-random-users`
+- Command: `users:fetch-random`
 - Frequency: every 5 minutes using:
-  - `Schedule::command('app:fetch-random-users')->everyFiveMinutes();`
+  - `Schedule::command('users:fetch-random')->everyFiveMinutes();`
 
 ### 2.2 Fetching Random Users
-- Logic is implemented in `app/Console/Commands/FetchRandomUsers.php`.
+- Command entry is implemented in:
+  - `app/Console/Commands/FetchRandomUsers.php`
+  - `app/Console/Commands/FetchRandomUsersLegacy.php` (alias for backward compatibility)
+- Business logic is implemented in:
+  - `app/Services/RandomUserService.php`
 - On each execution:
   - Makes **5 separate HTTP calls** to `https://randomuser.me/api/`.
   - Reads one user from each response (`results[0]`).
@@ -22,8 +26,7 @@ This Laravel project fetches random users on a schedule, saves them into normali
     - Gender
     - City
     - Country
-- Each user save is wrapped in a database transaction.
-- `updateOrCreate` is used so repeated emails are updated cleanly instead of duplicated.
+- Duplicate users are skipped when email already exists in `users` table.
 
 ### 2.3 Database Structure
 
@@ -84,7 +87,7 @@ This Laravel project fetches random users on a schedule, saves them into normali
 - `gender` (optional)
 - `city` (optional)
 - `country` (optional)
-- `limit` (optional, min 1, max 100, default 10)
+- `limit` (optional, default 10)
 - `fields` (optional enhancement)
   - Comma-separated list, for example:
   - `fields=name,email,city`
@@ -101,18 +104,15 @@ If `fields` is provided, only requested valid fields are returned.
 
 ### 4.4 Response Shape
 ```json
-{
-  "count": 2,
-  "data": [
-    {
-      "name": "John Doe",
-      "email": "john@example.com",
-      "gender": "male",
-      "city": "Berlin",
-      "country": "Germany"
-    }
-  ]
-}
+[
+  {
+    "name": "John Doe",
+    "email": "john@example.com",
+    "gender": "male",
+    "city": "Berlin",
+    "country": "Germany"
+  }
+]
 ```
 
 ## 5. Scheduling in Production
@@ -122,10 +122,12 @@ Laravel scheduler needs one cron entry on the server:
 * * * * * cd /path-to-project && php artisan schedule:run >> /dev/null 2>&1
 ```
 
-This cron runs every minute, while Laravel executes `app:fetch-random-users` every 5 minutes based on schedule definition.
+This cron runs every minute, while Laravel executes `users:fetch-random` every 5 minutes based on schedule definition.
 
 ## 6. Main Files Added/Updated
 - `app/Console/Commands/FetchRandomUsers.php`
+- `app/Console/Commands/FetchRandomUsersLegacy.php`
+- `app/Services/RandomUserService.php`
 - `app/Http/Controllers/Api/UserController.php`
 - `app/Models/User.php`
 - `app/Models/UserDetail.php`
@@ -136,17 +138,20 @@ This cron runs every minute, while Laravel executes `app:fetch-random-users` eve
 - `database/migrations/0001_01_01_000000_create_users_table.php`
 - `database/migrations/2026_02_20_034452_create_user_details_table.php`
 - `database/migrations/2026_02_20_034452_create_locations_table.php`
+- `database/create_database.sql`
 - `database/factories/UserFactory.php`
 
 ## 7. Basic Run Steps
-1. Configure `.env` database values.
-2. Run:
+1. Create database:
+   - `mysql -u root -p < database/create_database.sql`
+2. Configure `.env` database values.
+3. Run:
    - `php artisan migrate`
-3. Run command manually once (optional):
-   - `php artisan app:fetch-random-users`
-4. Run server:
+4. Run command manually once (optional):
+   - `php artisan users:fetch-random`
+5. Run server:
    - `php artisan serve`
-5. Test API:
+6. Test API:
    - `GET /api/users`
    - `GET /api/users?gender=female&country=India&limit=5`
    - `GET /api/users?fields=name,email,country&limit=3`
