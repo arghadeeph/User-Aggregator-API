@@ -73,3 +73,7 @@ GET /api/users?gender=female&country=India&limit=5&fields=name,email,country
 ## Detailed Documentation
 See `Documentation/DOCUMENTATION.md` for a full breakdown of architecture, schema, flow, and implementation notes.
 For architecture and design decisions, see `Documentation/DETAILED_EXPLANATION.md`.
+
+## Owner
+Project Owner: Arghadeep Halder  
+Created On: 2026-02-20

@@ -1,5 +1,9 @@
 # User Aggregator API - Implementation Document
 
+## Owner
+- Project Owner: Arghadeep Halder
+- Created On: 2026-02-20
+
 ## 1. Project Goal
 This Laravel project fetches random users on a schedule, saves them into normalized tables, and exposes a public API to filter and return user data.
 
