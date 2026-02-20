@@ -63,7 +63,11 @@ GET /api/users?gender=female&country=India&limit=5&fields=name,email,country
 ```
 
 ### Response
-- Returns a JSON array of users.
+- Returns a JSON object with:
+  - `success` (boolean)
+  - `message` (string)
+  - `count` (number)
+  - `data` (array of users)
 - If `fields` is passed, only requested fields are returned for each user.
 
 ## Detailed Documentation

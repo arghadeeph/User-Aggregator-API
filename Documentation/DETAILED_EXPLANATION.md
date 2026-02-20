@@ -38,7 +38,7 @@ This keeps the flow readable and easy to maintain without adding unnecessary abs
 - Responsibility:
   - Read filter inputs from request (`gender`, `city`, `country`, `limit`, `fields`)
   - Build filtered query
-  - Return transformed API output
+  - Return transformed API output in a standard response object (`success`, `message`, `count`, `data`)
 
 ## 3. Database Design
 

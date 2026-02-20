@@ -104,15 +104,20 @@ If `fields` is provided, only requested valid fields are returned.
 
 ### 4.4 Response Shape
 ```json
-[
-  {
-    "name": "John Doe",
-    "email": "john@example.com",
-    "gender": "male",
-    "city": "Berlin",
-    "country": "Germany"
-  }
-]
+{
+  "success": true,
+  "message": "Users fetched successfully.",
+  "count": 1,
+  "data": [
+    {
+      "name": "John Doe",
+      "email": "john@example.com",
+      "gender": "male",
+      "city": "Berlin",
+      "country": "Germany"
+    }
+  ]
+}
 ```
 
 ## 5. Scheduling in Production

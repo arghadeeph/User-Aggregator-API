@@ -39,25 +39,38 @@ class UserController extends Controller
         $users = $query->limit($limit)->get();
 
         $fields = $request->get('fields');
+        $allowedFields = ['name', 'email', 'gender', 'city', 'country'];
 
         if ($fields) {
+            $fields = array_values(array_intersect(
+                $allowedFields,
+                array_map('trim', explode(',', $fields))
+            ));
 
-            $fields = explode(',', $fields);
-
-            $users = $users->map(function ($user) use ($fields) {
-
-                $data = [
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'gender' => $user->detail->gender ?? null,
-                    'city' => $user->location->city ?? null,
-                    'country' => $user->location->country ?? null,
-                ];
-
-                return collect($data)->only($fields);
-            });
+            if (empty($fields)) {
+                $fields = $allowedFields;
+            }
+        } else {
+            $fields = $allowedFields;
         }
 
-        return response()->json($users);
+        $data = $users->map(function ($user) use ($fields) {
+            $item = [
+                'name' => $user->name,
+                'email' => $user->email,
+                'gender' => $user->detail->gender ?? null,
+                'city' => $user->location->city ?? null,
+                'country' => $user->location->country ?? null,
+            ];
+
+            return collect($item)->only($fields)->all();
+        })->values();
+
+        return response()->json([
+            'success' => true,
+            'message' => $data->isEmpty() ? 'No users found.' : 'Users fetched successfully.',
+            'count' => $data->count(),
+            'data' => $data,
+        ]);
     }
 }
